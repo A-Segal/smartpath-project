@@ -1,0 +1,70 @@
+from sqlalchemy.orm import Session
+from models.volunteer import Volunteer
+
+class VolunteerRepository:
+    def __init__(self, db: Session):
+        self.db = db
+
+    def create_volunteer(
+        self,
+        fname: str,
+        lname: str,
+        username: str,
+        password: str,
+        mail: str = None,
+        phone: str = None
+    ) -> Volunteer:
+        volunteer = Volunteer(
+            fname=fname,
+            lname=lname,
+            username=username,
+            password=password,
+            mail=mail,
+            phone=phone
+        )
+        self.db.add(volunteer)
+        self.db.commit()
+        self.db.refresh(volunteer)
+        return volunteer
+
+    def get_volunteer(self, volunteerID: int) -> Volunteer | None:
+        return self.db.query(Volunteer).filter(Volunteer.id == volunteerID).first()
+
+    def get_all_volunteers(self) -> list[Volunteer]:
+        return self.db.query(Volunteer).all()
+
+    def update_volunteer(
+        self,
+        volunteerID: int,
+        fname: str = None,
+        lname: str = None,
+        username: str = None,
+        password: str = None,
+        mail: str = None,
+        phone: str = None
+    ) -> Volunteer | None:
+        volunteer = self.get_volunteer(volunteerID)
+        if volunteer:
+            if fname is not None:
+                volunteer.fname = fname
+            if lname is not None:
+                volunteer.lname = lname
+            if username is not None:
+                volunteer.username = username
+            if password is not None:
+                volunteer.password = password
+            if mail is not None:
+                volunteer.mail = mail
+            if phone is not None:
+                volunteer.phone = phone
+            self.db.commit()
+            self.db.refresh(volunteer)
+        return volunteer
+
+    def delete_volunteer(self, volunteerID: int) -> bool:
+        volunteer = self.get_volunteer(volunteerID)
+        if volunteer:
+            self.db.delete(volunteer)
+            self.db.commit()
+            return True
+        return False

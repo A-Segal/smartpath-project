@@ -10,4 +10,4 @@ class StaffMember(Base):
     password = Column(String(100), nullable=False)
     mail = Column(String(100))
     phone = Column(String(20))
-    permission_id = Column(Integer, ForeignKey('Permission.id'), nullable=False)
+    PermissionID = Column(Integer, ForeignKey('Permission.id'), nullable=False)

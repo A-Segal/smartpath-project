@@ -5,6 +5,6 @@ class DeliveryAssignment(Base):
     __tablename__ = 'DeliveryAssignment'
     id = Column(Integer, primary_key=True, autoincrement=True)
     distribution_center_id = Column(Integer, ForeignKey('DistributionCenter.id'), nullable=False)
-    recipient_id = Column(Integer, ForeignKey('Recipient.id'), nullable=False)
-    volunteer_id = Column(Integer, ForeignKey('Volunteer.id'), nullable=False)
+    RecipientID = Column(Integer, ForeignKey('Recipient.id'), nullable=False)
+    VolunteerID = Column(Integer, ForeignKey('Volunteer.id'), nullable=False)
     amount_of_meals = Column(Integer)

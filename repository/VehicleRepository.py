@@ -1,44 +1,35 @@
+from sqlalchemy.orm import Session
 from models.vehicle import Vehicle
 
-
-from sqlalchemy.orm import Session
-
 class VehicleRepository:
-    def __init__(self, session: Session):
-        self.session = session
+    def __init__(self, db: Session):
+        self.db = db
 
-    def add_vehicle(self, volunteer_id: int, capacity: int) -> Vehicle:
-        vehicle = Vehicle(VolunteerID=volunteer_id, capacity=capacity)
-        self.session.add(vehicle)
-        self.session.commit()
-        self.session.refresh(vehicle)
+    def create_vehicle(self, VolunteerID: int, capacity: int) -> Vehicle:
+        vehicle = Vehicle(VolunteerID=VolunteerID, capacity=capacity)
+        self.db.add(vehicle)
+        self.db.commit()
+        self.db.refresh(vehicle)
         return vehicle
 
-    def get_vehicle_by_id(self, vehicle_id: int) -> Vehicle:
-        return self.session.query(Vehicle).filter(Vehicle.id == vehicle_id).first()
+    def get_vehicle(self, vehicleID: int) -> Vehicle | None:
+        return self.db.query(Vehicle).filter(Vehicle.id == vehicleID).first()
 
-    def get_vehicles_by_volunteer(self, volunteer_id: int):
-        return self.session.query(Vehicle).filter(Vehicle.VolunteerID == volunteer_id).all()
+    def get_all_vehicles(self) -> list[Vehicle]:
+        return self.db.query(Vehicle).all()
 
-    def update_vehicle(self, vehicle_id: int, volunteer_id: int = None, capacity: int = None) -> Vehicle:
-        vehicle = self.get_vehicle_by_id(vehicle_id)
-        if vehicle is None:
-            return None
-        if volunteer_id is not None:
-            vehicle.VolunteerID = volunteer_id
-        if capacity is not None:
+    def update_vehicle(self, vehicleID: int, capacity: int) -> Vehicle | None:
+        vehicle = self.get_vehicle(vehicleID)
+        if vehicle:
             vehicle.capacity = capacity
-        self.session.commit()
-        self.session.refresh(vehicle)
+            self.db.commit()
+            self.db.refresh(vehicle)
         return vehicle
 
-    def delete_vehicle(self, vehicle_id: int) -> bool:
-        vehicle = self.get_vehicle_by_id(vehicle_id)
-        if vehicle is None:
-            return False
-        self.session.delete(vehicle)
-        self.session.commit()
-        return True
-
-    def get_all_vehicles(self):
-        return self.session.query(Vehicle).all()
+    def delete_vehicle(self, vehicleID: int) -> bool:
+        vehicle = self.get_vehicle(vehicleID)
+        if vehicle:
+            self.db.delete(vehicle)
+            self.db.commit()
+            return True
+        return False
