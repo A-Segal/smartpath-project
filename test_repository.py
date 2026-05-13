@@ -1,29 +1,14 @@
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-
-from models import permission
 from models.base import Base
 from repository.VehicleRepository import VehicleRepository
 from repository.VolunteerRepository import VolunteerRepository
+from db_connection import SessionLocal, engine
 
 # ---- הגדרות חיבור ----
-SERVER = 'localhost'
-DATABASE = 'deliveryDB'
-DRIVER = 'ODBC Driver 17 for SQL Server'
 
-connection_string = f"mssql+pyodbc://@{SERVER}/{DATABASE}?driver={DRIVER.replace(' ', '+')}&trusted_connection=yes"
-engine = create_engine(connection_string)
-Session = sessionmaker(bind=engine)
 Base.metadata.create_all(engine)
-db_session = Session()
-#------change to the repository
+db_session=SessionLocal()
+
 repo = VolunteerRepository(db_session)
-
-
-
-###############here to put al the try
-
-
 
 vehicle_repo = VehicleRepository(db_session)
 volunteer_repo = VolunteerRepository(db_session)
@@ -31,13 +16,13 @@ volunteer_repo.vehicle_repo = vehicle_repo
 
 # # ---- CREATE ----
 new_volunteer = volunteer_repo.create_volunteer(
-    fname="John",
-    lname="Doe",
-    username="johndoe",
-    password="12345",
-    vehicle_capacity=4,
-    mail="john@example.com",
-    phone="0501234567"
+    fname="ddddddddd",
+    lname="dddddd",
+    username="ddd",
+    password="333",
+    vehicle_capacity=7,
+    mail="as@example.com",
+    phone="2222222"
 )
 print(f"נוצר Volunteer עם ID: {new_volunteer.id}, שם: {new_volunteer.fname} {new_volunteer.lname}")
 
