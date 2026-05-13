@@ -7,13 +7,13 @@ class DeliveryAssignmentRepository:
 
     def create_delivery_assignment(
         self,
-        distribution_center_id: int,
+        DistributionCenterID: int,
         RecipientID: int,
         VolunteerID: int,
         amount_of_meals: int
     ) -> DeliveryAssignment:
         assignment = DeliveryAssignment(
-            distribution_center_id=distribution_center_id,
+            DistributionCenterID=DistributionCenterID,
             RecipientID=RecipientID,
             VolunteerID=VolunteerID,
             amount_of_meals=amount_of_meals
@@ -32,15 +32,15 @@ class DeliveryAssignmentRepository:
     def update_delivery_assignment(
         self,
         assignmentID: int,
-        distribution_center_id: int = None,
+        DistributionCenterID: int = None,
         RecipientID: int = None,
         VolunteerID: int = None,
         amount_of_meals: int = None
     ) -> DeliveryAssignment | None:
         assignment = self.get_delivery_assignment(assignmentID)
         if assignment:
-            if distribution_center_id is not None:
-                assignment.distribution_center_id = distribution_center_id
+            if DistributionCenterID is not None:
+                assignment.DistributionCenterID = DistributionCenterID
             if RecipientID is not None:
                 assignment.RecipientID = RecipientID
             if VolunteerID is not None:

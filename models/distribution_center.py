@@ -3,7 +3,7 @@ from .base import Base
 
 class DistributionCenter(Base):
     __tablename__ = 'DistributionCenter'
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    id = Column(Integer, primary_key=True)
     fname = Column(String(50), nullable=False)
     lname = Column(String(50), nullable=False)
     username = Column(String(50), nullable=False, unique=True)
@@ -14,3 +14,4 @@ class DistributionCenter(Base):
     location_lng = Column(DECIMAL(10, 7), nullable=False)
     meal_count = Column(Integer, nullable=False)
     request = Column(String(255))
+

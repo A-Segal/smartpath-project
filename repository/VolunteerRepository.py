@@ -1,9 +1,12 @@
 from sqlalchemy.orm import Session
 from models.volunteer import Volunteer
+from repository.VehicleRepository import VehicleRepository
+
 
 class VolunteerRepository:
     def __init__(self, db: Session):
         self.db = db
+        self.vehicle_repo =VehicleRepository (db)
 
     def create_volunteer(
         self,
@@ -11,9 +14,11 @@ class VolunteerRepository:
         lname: str,
         username: str,
         password: str,
+        vehicle_capacity: int,
         mail: str = None,
         phone: str = None
     ) -> Volunteer:
+        # יוצרים את המתנדב
         volunteer = Volunteer(
             fname=fname,
             lname=lname,
@@ -25,6 +30,13 @@ class VolunteerRepository:
         self.db.add(volunteer)
         self.db.commit()
         self.db.refresh(volunteer)
+
+        # יוצרים רכב שמחובר למתנדב
+        self.vehicle_repo.create_vehicle(
+            VolunteerID=volunteer.id,
+            capacity=vehicle_capacity
+        )
+
         return volunteer
 
     def get_volunteer(self, volunteerID: int) -> Volunteer | None:
