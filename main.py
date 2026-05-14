@@ -1,14 +1,24 @@
 from flask import Flask
-from controller.volunteer_controller import volunteer_bp  # הקובץ שלך
-from controller.recipient_request_controller import recipient_request_bp  # הקובץ שלך
-
+from controller.volunteer_controller import volunteer_bp
+from controller.recipient_request_controller import recipient_request_bp
+from controller.recipient_controller import  recipient_bp
+from controller.permission_controller import permission_bp
 from controller.ds_request_controller import ds_request_bp
+from controller.vehicle_controller import vehicle_bp
+from controller.staff_member_controller import staff_bp
+from controller.delivery_assignment_controller import delivery_assignment_bp
+from controller.distribution_center_controller import distribution_center_bp
 app = Flask(__name__)
+
 app.register_blueprint(volunteer_bp)
 app.register_blueprint(ds_request_bp)
 app.register_blueprint(recipient_request_bp)
-
-
+app.register_blueprint(recipient_bp)
+app.register_blueprint(permission_bp)
+app.register_blueprint(vehicle_bp)
+app.register_blueprint(staff_bp)
+app.register_blueprint(delivery_assignment_bp)
+app.register_blueprint(distribution_center_bp)
 
 @app.route('/')
 def home():

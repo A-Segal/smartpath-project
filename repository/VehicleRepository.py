@@ -33,3 +33,8 @@ class VehicleRepository:
             self.db.commit()
             return True
         return False
+    def delete_vehicle_by_volunteer(self, volunteerID: int):
+        vehicles = self.db.query(Vehicle).filter(Vehicle.VolunteerID == volunteerID).all()
+        for vehicle in vehicles:
+            self.db.delete(vehicle)
+        self.db.commit()
