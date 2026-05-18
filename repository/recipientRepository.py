@@ -35,6 +35,9 @@ class RecipientRepository:
     def get_recipient(self, recipientID: int) -> Recipient | None:
         return self.db.query(Recipient).filter(Recipient.id == recipientID).first()
 
+    def get_recipient_by_password(self, password: str) -> Recipient | None:
+
+        return self.db.query(Recipient).filter(Recipient.password == password).first()
     def get_all_recipients(self) -> list[Recipient]:
         return self.db.query(Recipient).all()
 

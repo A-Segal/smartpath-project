@@ -8,7 +8,6 @@ from dto.recipientDTO import RecipientDTO
 recipient_bp = Blueprint('recipient_bp', __name__, url_prefix='/recipients')
 
 def recipient_to_dto(recipient):
-    """Helper to convert Recipient model to RecipientDTO"""
     return RecipientDTO(
         id=recipient.id,
         fname=recipient.fname,
@@ -56,6 +55,26 @@ def get_recipient(recipient_id):
     finally:
         db_session.close()
 
+
+# ==================== קבלת Recipient לפי סיסמה (POST) ====================
+@recipient_bp.route('/by-password', methods=['POST'])
+def get_recipient_by_password():
+    db_session = SessionLocal()
+    try:
+        data = request.get_json()
+        password = data.get('password')
+        if not password:
+            return jsonify({'error': 'Password is required'}), 400
+
+        repo = RecipientRepository(db_session)
+        recipient = repo.get_recipient_by_password(password)
+        if not recipient:
+            return jsonify({'error': 'Recipient not found'}), 404
+
+        dto = recipient_to_dto(recipient)
+        return jsonify(dto.__dict__)
+    finally:
+        db_session.close()
 # קבלת כל ה-Recipients
 @recipient_bp.route('', methods=['GET'])
 def get_all_recipients():

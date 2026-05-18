@@ -60,7 +60,34 @@ def get_volunteer(volunteer_id):
     finally:
         db_session.close()
 
+# ===================== קבלת מתנדב לפי password =====================
+@volunteer_bp.route('/by-password', methods=['POST'])
+def get_volunteer_by_password():
 
+    db_session = SessionLocal()
+    try:
+        data = request.get_json()
+        password = data.get('password')
+        if not password:
+            return jsonify({'error': 'Password is required'}), 400
+
+        volunteer_repo = VolunteerRepository(db_session)
+        volunteer = volunteer_repo.get_volunteer_by_password(password)
+        if volunteer is None:
+            return jsonify({'error': 'Volunteer not found'}), 404
+
+        volunteer_dto = VolunteerDTO(
+            id=volunteer.id,
+            fname=volunteer.fname,
+            lname=volunteer.lname,
+            username=volunteer.username,
+            mail=volunteer.mail,
+            phone=volunteer.phone
+        )
+
+        return jsonify(volunteer_dto.__dict__)
+    finally:
+        db_session.close()
 # ===================== קבלת כל המתנדבים =====================
 @volunteer_bp.route('', methods=['GET'])
 def get_all_volunteers():

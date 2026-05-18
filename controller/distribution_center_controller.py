@@ -70,6 +70,36 @@ def get_distribution_center(center_id):
     finally:
         db_session.close()
 
+# ==================== קבלת מרכז חלוקה לפי סיסמה (POST) ====================
+@distribution_center_bp.route('/by-password', methods=['POST'])
+def get_distribution_center_by_password():
+    db_session = SessionLocal()
+    try:
+        data = request.get_json()
+        password = data.get('password')
+        if not password:
+            return jsonify({'error': 'Password is required'}), 400
+
+        repo = DistributionCenterRepository(db_session)
+        center = repo.get_distribution_center_by_password(password)
+        if not center:
+            return jsonify({'error': 'DistributionCenter not found'}), 404
+
+        dto = DistributionCenterDTO(
+            id=center.id,
+            fname=center.fname,
+            lname=center.lname,
+            username=center.username,
+            mail=center.mail,
+            phone=center.phone,
+            location_lat=center.location_lat,
+            location_lng=center.location_lng,
+            request=center.request
+        )
+
+        return jsonify(dto.__dict__)
+    finally:
+        db_session.close()
 # ==================== קבלת כל מרכזי החלוקה (GET all) ====================
 @distribution_center_bp.route('', methods=['GET'])
 def get_all_distribution_centers():
