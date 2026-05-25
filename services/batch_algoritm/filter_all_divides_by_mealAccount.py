@@ -5,11 +5,11 @@
 from sqlalchemy.orm import Session
 from models.recipient_request import RecipientRequest
 from models.DS_request import DS_Request
+from services.batch_algoritm.dict_of_all_options_divides import dict_of_all_options_divides
 
 
-def filter_all_divides_by_mealAccount(db: Session, all_options: list):
-
-
+def filter_all_divides_by_mealAccount(db: Session):
+    all_options = dict_of_all_options_divides(db)
     ds_requests = db.query(DS_Request).all()
     rec_requests = db.query(RecipientRequest).all()
 

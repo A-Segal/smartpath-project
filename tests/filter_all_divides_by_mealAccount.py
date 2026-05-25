@@ -2,21 +2,16 @@ import csv
 import os
 
 from db_connection import get_session
-from services.batch_algoritm.filter_all_divides_by_mealAccount import filter_all_divides_by_mealAccount
-from services.batch_algoritm.dict_of_all_options_divides import (
-    dict_of_all_options_divides
+from services.batch_algoritm.filter_all_divides_by_mealAccount import (
+    filter_all_divides_by_mealAccount
 )
 
 
 def test_filter():
+
     with get_session() as db:
 
-        all_options = dict_of_all_options_divides(db)
-
-        print("\n========== RAW OPTIONS ==========\n")
-        print(len(all_options))
-
-        result = filter_all_divides_by_mealAccount(db, all_options)
+        result = filter_all_divides_by_mealAccount(db)
 
         print("\n========== FILTER RESULT ==========\n")
 
@@ -24,7 +19,6 @@ def test_filter():
             print("No valid options found")
             return
 
-        # יצירת תיקייה אם לא קיימת
         os.makedirs("csvfiles", exist_ok=True)
 
         csv_path = os.path.join("csvfiles", "filtered_results1.csv")
