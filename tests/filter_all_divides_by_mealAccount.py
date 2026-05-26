@@ -21,7 +21,7 @@ def test_filter():
 
         os.makedirs("csvfiles", exist_ok=True)
 
-        csv_path = os.path.join("csvfiles", "filtered_results1.csv")
+        csv_path = os.path.join("csvfiles", "filtered_results.csv")
 
         with open(csv_path, mode="w", newline="", encoding="utf-8-sig") as file:
 

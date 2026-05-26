@@ -22,7 +22,7 @@ def try_the_first():
 
         csv_path = os.path.join(
             "csvfiles",
-            "all_options_dist_rec_to_discenter_example1.csv"
+            "all_options_dist_rec_to_discenter_example.csv"
         )
 
         with open(csv_path, mode="w", newline="", encoding="utf-8-sig") as file:
