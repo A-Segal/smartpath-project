@@ -2,8 +2,8 @@ import csv
 import os
 
 from db_connection import get_session
-from services.batch_algoritm.filter_all_divides_by_mealAccount import (
-    filter_all_divides_by_mealAccount
+from services.batch_algoritm.options_of_Inlay_filter_by_meals import (
+dict_of_valid_divide_options
 )
 
 
@@ -11,9 +11,9 @@ def test_filter():
 
     with get_session() as db:
 
-        result = filter_all_divides_by_mealAccount(db)
+        result = dict_of_valid_divide_options(db)
 
-        print("\n========== FILTER RESULT ==========\n")
+        print("\n========== VALID OPTIONS RESULT ==========\n")
 
         if not result:
             print("No valid options found")
@@ -21,7 +21,7 @@ def test_filter():
 
         os.makedirs("csvfiles", exist_ok=True)
 
-        csv_path = os.path.join("csvfiles", "filtered_results.csv")
+        csv_path = os.path.join("csvfiles", "valid_divide_options2.csv")
 
         with open(csv_path, mode="w", newline="", encoding="utf-8-sig") as file:
 
