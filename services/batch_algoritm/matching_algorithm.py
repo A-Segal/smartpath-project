@@ -37,14 +37,17 @@ def calculate_match_score(
 #the func create Dictionary of the filter meals and max dist that the key:CenterID and the value is: not sort list of object :(RecipientID, Score)
 def build_candidates_for_centers(db):
     """
-    Dictionary<CenterID, List<(RecipientID, Score)>>
-    Returns:
-    {
-        center_id: [
-            (recipient_id, score),
-            ...
-        ]
-    }
+    Dictionary<
+        CenterID,
+        List<
+            (
+                RecipientID,
+                Score,
+                RecipientMeals,
+                CenterMeals
+            )
+        >
+    >
     """
 
     center_repo = DistributionCenterRepository(db)
@@ -52,79 +55,73 @@ def build_candidates_for_centers(db):
     ds_request_repo = DSRequestRepository(db)
     recipient_request_repo = RecipientRequestRepository(db)
 
-    # Get data from DB
     centers = center_repo.get_all_distribution_centers()
     recipients = recipient_repo.get_all_recipients()
 
     center_requests = ds_request_repo.get_all_requests()
     recipient_requests = recipient_request_repo.get_all_requests()
 
-    # DistributionCenterID -> DS_Request
     center_requests_dict = {
         request.DistributionCenterID: request
         for request in center_requests
     }
 
-    # RecipientID -> RecipientRequest
     recipient_requests_dict = {
         request.RecipientID: request
         for request in recipient_requests
     }
 
-    # Dictionary<CenterID, List<(RecipientID, Score)>>
     candidates_by_center = {}
 
-    # Go over all centers
     for center in centers:
 
         candidates_by_center[center.id] = []
 
         center_request = center_requests_dict.get(center.id)
 
-        # Center without request
         if center_request is None:
             continue
 
         center_meals = center_request.amount_of_meals
 
-        # Check all recipients
         for recipient in recipients:
 
-            recipient_request = recipient_requests_dict.get(recipient.id)
+            recipient_request = recipient_requests_dict.get(
+                recipient.id
+            )
 
-            # Recipient without request
             if recipient_request is None:
                 continue
 
-            recipient_meals = recipient_request.amount_of_meals
+            recipient_meals = (
+                recipient_request.amount_of_meals
+            )
 
-            # Meals condition
             if recipient_meals > center_meals:
                 continue
 
-            # Calculate distance
             distance = distance_between_points(
                 float(center.location_lat),
                 float(center.location_lng),
                 float(recipient.location_lat),
                 float(recipient.location_lng)
             )
-            # Distance condition
+
             if distance > 100:
                 continue
 
-            # Calculate score
             score = calculate_match_score(
                 center_meals=center_meals,
                 recipient_meals=recipient_meals,
                 distance=distance
             )
 
-            # Add candidate
             candidates_by_center[center.id].append(
                 (
                     recipient.id,
-                    score
+                    score,
+                    recipient_meals,
+                    center_meals
                 )
             )
 

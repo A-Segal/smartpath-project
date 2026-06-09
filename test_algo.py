@@ -1,186 +1,96 @@
-# from db_connection import get_session
-# from services.batch_algoritm.main_algoritm import run_full_matching
-#
-#
-# def test_real_database_matching():
-#     db = get_session()
-#
-#     try:
-#         result = run_full_matching(db)
-#
-#         print("\n========== MATCHING RESULT ==========\n")
-#
-#         for recipient_id, (center_id, score) in sorted(result.items()):
-#             print(
-#                 f"Recipient {recipient_id} "
-#                 f"-> Center {center_id} "
-#                 f"(Score={score:.4f})"
-#             )
-#
-#         print("\n========== STATISTICS ==========\n")
-#
-#         print(f"Total assignments: {len(result)}")
-#
-#         assigned_centers = [
-#             center_id
-#             for center_id, score in result.values()
-#         ]
-#
-#         print(
-#             f"Unique centers used: "
-#             f"{len(set(assigned_centers))}"
-#         )
-#
-#         print(
-#             f"Unique recipients assigned: "
-#             f"{len(result)}"
-#         )
-#
-#         # Validation 1
-#         assert len(result.keys()) == len(set(result.keys()))
-#
-#         # Validation 2
-#         assert len(assigned_centers) == len(set(assigned_centers))
-#
-#         print("\nAll validations passed.")
-#
-#     finally:
-#         db.close()
-#
-#
-# if __name__ == "__main__":
-#     test_real_database_matching()
-
+from datetime import date
 
 from db_connection import get_session
-
 from services.batch_algoritm.main_algoritm import run_full_matching
-from services.googleMaps import distance_between_points
-
-from repository.recipientRepository import RecipientRepository
-from repository.distribution_centerRepository import DistributionCenterRepository
-from repository.DS_request_Repository import DSRequestRepository
 from repository.recipient_request_repository import RecipientRequestRepository
+from repository.DS_request_Repository import DSRequestRepository
+from repository.distribution_centerRepository import DistributionCenterRepository
+from repository.recipientRepository import RecipientRepository
+from services.googleMaps import distance_between_points
 
 
 def test_real_database_matching():
     db = get_session()
 
+    recipient_request_repo = RecipientRequestRepository(db)
+    ds_request_repo = DSRequestRepository(db)
+    center_repo = DistributionCenterRepository(db)
+    recipient_repo = RecipientRepository(db)
+
     try:
         result = run_full_matching(db)
 
-        recipient_repo = RecipientRepository(db)
-        center_repo = DistributionCenterRepository(db)
-        recipient_request_repo = RecipientRequestRepository(db)
-        center_request_repo = DSRequestRepository(db)
+        print("\n========== MATCHING RESULT ==========\n")
 
-        recipients = {
-            r.id: r
-            for r in recipient_repo.get_all_recipients()
-        }
+        all_requests = recipient_request_repo.get_all_requests()
+
+        today_requests = [
+            request
+            for request in all_requests
+            if request.request_date.date() == date.today()
+        ]
 
         centers = {
             c.id: c
             for c in center_repo.get_all_distribution_centers()
         }
 
-        recipient_requests = {
-            r.RecipientID: r
-            for r in recipient_request_repo.get_all_requests()
+        recipients = {
+            r.id: r
+            for r in recipient_repo.get_all_recipients()
         }
 
-        center_requests = {
-            r.DistributionCenterID: r
-            for r in center_request_repo.get_all_requests()
-        }
+        for recipient_id, assignment in sorted(result.items()):
 
-        print("\n========== RAW RESULT ==========")
-        print(result)
+            center_id = assignment["center_id"]
+            score = assignment["score"]
+            recipient_meals = assignment["recipient_meals"]
+            center_meals = assignment["center_meals"]
 
-        print("\n========== ASSIGNMENTS ==========\n")
-
-        for recipient_id, (center_id, score) in sorted(result.items()):
-
-            recipient = recipients.get(recipient_id)
-            center = centers.get(center_id)
-
-            if recipient is None:
-                print(f"Recipient {recipient_id} not found")
-                continue
-
-            if center is None:
-                print(f"Center {center_id} not found")
-                continue
+            recipient_obj = recipients.get(recipient_id)
+            center_obj = centers.get(center_id)
 
             distance = distance_between_points(
-                float(center.location_lat),
-                float(center.location_lng),
-                float(recipient.location_lat),
-                float(recipient.location_lng)
-            )
-
-            recipient_request = recipient_requests.get(
-                recipient_id
-            )
-
-            center_request = center_requests.get(
-                center_id
-            )
-
-            recipient_meals = (
-                recipient_request.amount_of_meals
-                if recipient_request
-                else "UNKNOWN"
-            )
-
-            center_meals = (
-                center_request.amount_of_meals
-                if center_request
-                else "UNKNOWN"
+                float(center_obj.location_lat),
+                float(center_obj.location_lng),
+                float(recipient_obj.location_lat),
+                float(recipient_obj.location_lng)
             )
 
             print(
-                f"Recipient {recipient_id}"
-                f" -> Center {center_id}"
+                f"Recipient {recipient_id} "
+                f"-> Center {center_id} "
+                f"(Score={score:.4f}, Distance={distance:.2f} km) "
+                f"| Recipient Meals={recipient_meals} "
+                f"| Center Meals={center_meals}"
             )
-
-            print(
-                f"Score: {score:.4f}"
-            )
-
-            print(
-                f"Distance: {distance:.2f} km"
-            )
-
-            print(
-                f"Recipient meals: {recipient_meals}"
-            )
-
-            print(
-                f"Center meals: {center_meals}"
-            )
-
-            if (
-                isinstance(recipient_meals, int)
-                and isinstance(center_meals, int)
-            ):
-                print(
-                    f"Remaining meals: "
-                    f"{center_meals - recipient_meals}"
-                )
-
-            print("-" * 50)
 
         print("\n========== STATISTICS ==========\n")
 
+        total_recipients_requested = len(today_requests)
+        total_recipients_assigned = len(result)
+        total_recipients_not_assigned = (
+            total_recipients_requested - total_recipients_assigned
+        )
+
         print(
-            f"Total assignments: {len(result)}"
+            f"Recipients requested today: "
+            f"{total_recipients_requested}"
+        )
+
+        print(
+            f"Recipients assigned: "
+            f"{total_recipients_assigned}"
+        )
+
+        print(
+            f"Recipients not assigned: "
+            f"{total_recipients_not_assigned}"
         )
 
         assigned_centers = [
-            center_id
-            for center_id, score
-            in result.values()
+            assignment["center_id"]
+            for assignment in result.values()
         ]
 
         print(
@@ -188,20 +98,12 @@ def test_real_database_matching():
             f"{len(set(assigned_centers))}"
         )
 
-        print(
-            f"Unique recipients assigned: "
-            f"{len(result)}"
-        )
+        assert len(result.keys()) == len(set(result.keys()))
+        assert len(assigned_centers) == len(set(assigned_centers))
 
-        assert len(result) == len(
-            set(result.keys())
-        )
-
-        assert len(assigned_centers) == len(
-            set(assigned_centers)
-        )
-
-        print("\nAll validations passed.")
+        print("\nNo duplicate recipients: OK")
+        print("No duplicate centers: OK")
+        print("All validations passed.")
 
     finally:
         db.close()
