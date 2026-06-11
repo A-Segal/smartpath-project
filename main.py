@@ -1,4 +1,6 @@
 from flask import Flask
+from flask_cors import CORS
+
 from controller.volunteer_controller import volunteer_bp
 from controller.recipient_request_controller import recipient_request_bp
 from controller.recipient_controller import  recipient_bp
@@ -10,6 +12,7 @@ from controller.delivery_assignment_controller import delivery_assignment_bp
 from controller.distribution_center_controller import distribution_center_bp
 app = Flask(__name__)
 
+CORS(app)
 app.register_blueprint(volunteer_bp)
 app.register_blueprint(ds_request_bp)
 app.register_blueprint(recipient_request_bp)
