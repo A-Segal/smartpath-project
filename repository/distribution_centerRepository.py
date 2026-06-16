@@ -35,8 +35,11 @@ class DistributionCenterRepository:
     def get_distribution_center(self, centerID: int) -> DistributionCenter | None:
         return self.db.query(DistributionCenter).filter(DistributionCenter.id == centerID).first()
 
-    def get_distribution_center_by_password(self, password: str) -> DistributionCenter | None:
-        return self.db.query(DistributionCenter).filter(DistributionCenter.password == password).first()
+    def get_by_username_password(self, username, password):
+        return self.db.query(DistributionCenter).filter_by(
+            username=username,
+            password=password
+        ).first()
     def get_all_distribution_centers(self) -> list[DistributionCenter]:
         return self.db.query(DistributionCenter).all()
 

@@ -41,8 +41,11 @@ class VolunteerRepository:
     def get_volunteer(self, volunteerID: int) -> Volunteer | None:
         return self.db.query(Volunteer).filter(Volunteer.id == volunteerID).first()
 
-    def get_volunteer_by_password(self, password: str) -> Volunteer | None:
-        return self.db.query(Volunteer).filter(Volunteer.password == password).first()
+    def get_by_username_password(self, username, password):
+        return self.db.query(Volunteer).filter_by(
+            username=username,
+            password=password
+        ).first()
     def get_all_volunteers(self) -> list[Volunteer]:
         return self.db.query(Volunteer).all()
 
