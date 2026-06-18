@@ -3,7 +3,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from models.delivery_assignment import DeliveryAssignment
 from models.distribution_center import DistributionCenter
-from models.DS_request import DS_Request
+from models.DC_request import DC_Request
 from models.recipient_request import RecipientRequest
 from models.recipient import Recipient
 from models.volunteer import Volunteer

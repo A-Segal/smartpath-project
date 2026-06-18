@@ -2,8 +2,8 @@
 from sqlalchemy import Column, Integer, ForeignKey, DateTime
 from .base import Base
 
-class DS_Request(Base):
-    __tablename__ = 'DS_Request'
+class DC_Request(Base):
+    __tablename__ = 'DC_Request'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     DistributionCenterID = Column(Integer, ForeignKey('DistributionCenter.id'), nullable=False)

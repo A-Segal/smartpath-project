@@ -1,6 +1,6 @@
 from repository.distribution_centerRepository import DistributionCenterRepository
 from repository.recipientRepository import RecipientRepository
-from repository.DS_request_Repository import DSRequestRepository
+from repository.DC_request_Repository import DCRequestRepository
 from repository.recipient_request_repository import RecipientRequestRepository
 from services.utils.googleMaps import distance_between_points
 
@@ -52,7 +52,7 @@ def build_candidates_for_centers(db,max_distance_km=100):
 
     center_repo = DistributionCenterRepository(db)
     recipient_repo = RecipientRepository(db)
-    ds_request_repo = DSRequestRepository(db)
+    ds_request_repo = DCRequestRepository(db)
     recipient_request_repo = RecipientRequestRepository(db)
 
     centers = center_repo.get_all_distribution_centers()

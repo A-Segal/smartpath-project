@@ -1,4 +1,4 @@
-class DSRequestDTO:
+class DCRequestDTO:
     def __init__(self, id, DistributionCenterID, amount_of_meals, request_date,type):
         self.id = id
         self.DistributionCenterID = DistributionCenterID

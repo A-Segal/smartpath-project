@@ -1,19 +1,19 @@
 from flask import Blueprint, request, jsonify
-from repository.DS_request_Repository import DSRequestRepository
+from repository.DC_request_Repository import DCRequestRepository
 from db_connection import SessionLocal
-from dto.DS_requestDTO import DSRequestDTO
+from dto.DC_requestDTO import DCRequestDTO
 from datetime import datetime
 
 # Blueprint עבור DS Requests
-ds_request_bp = Blueprint('ds_request_bp', __name__, url_prefix='/ds_requests')
+dc_request_bp = Blueprint('dc_request_bp', __name__, url_prefix='/dc_requests')
 
 
 # ===================== יצירת בקשה =====================
-@ds_request_bp.route('', methods=['POST'])
+@dc_request_bp.route('', methods=['POST'])
 def add_request():
     db_session = SessionLocal()
     try:
-        repo = DSRequestRepository(db_session)
+        repo = DCRequestRepository(db_session)
         data = request.get_json()
 
         request_date = data.get('request_date')
@@ -29,7 +29,7 @@ def add_request():
             type=type
         )
 
-        dto = DSRequestDTO(
+        dto = DCRequestDTO(
             id=new_request.id,
             DistributionCenterID=new_request.DistributionCenterID,
             amount_of_meals=new_request.amount_of_meals,
@@ -42,16 +42,16 @@ def add_request():
 
 
 # ===================== קבלת בקשה לפי ID =====================
-@ds_request_bp.route('/<int:request_id>', methods=['GET'])
+@dc_request_bp.route('/<int:request_id>', methods=['GET'])
 def get_request(request_id):
     db_session = SessionLocal()
     try:
-        repo = DSRequestRepository(db_session)
+        repo = DCRequestRepository(db_session)
         req = repo.get_request(request_id)
         if req is None:
             return jsonify({'error': 'Request not found'}), 404
 
-        dto = DSRequestDTO(
+        dto = DCRequestDTO(
             id=req.id,
             DistributionCenterID=req.DistributionCenterID,
             amount_of_meals=req.amount_of_meals,
@@ -64,15 +64,15 @@ def get_request(request_id):
 
 
 # ===================== קבלת כל הבקשות =====================
-@ds_request_bp.route('', methods=['GET'])
+@dc_request_bp.route('', methods=['GET'])
 def get_all_requests():
     db_session = SessionLocal()
     try:
-        repo = DSRequestRepository(db_session)
+        repo = DCRequestRepository(db_session)
         all_requests = repo.get_all_requests()
 
         dto_list = [
-            DSRequestDTO(
+            DCRequestDTO(
                 id=r.id,
                 DistributionCenterID=r.DistributionCenterID,
                 amount_of_meals=r.amount_of_meals,
@@ -86,11 +86,11 @@ def get_all_requests():
 
 
 # ===================== עדכון בקשה =====================
-@ds_request_bp.route('/<int:request_id>', methods=['PUT'])
+@dc_request_bp.route('/<int:request_id>', methods=['PUT'])
 def update_request(request_id):
     db_session = SessionLocal()
     try:
-        repo = DSRequestRepository(db_session)
+        repo = DCRequestRepository(db_session)
         data = request.get_json()
 
         request_date = data.get('request_date')
@@ -109,7 +109,7 @@ def update_request(request_id):
         if updated_request is None:
             return jsonify({'error': 'Request not found'}), 404
 
-        dto = DSRequestDTO(
+        dto = DCRequestDTO(
             id=updated_request.id,
             DistributionCenterID=updated_request.DistributionCenterID,
             amount_of_meals=updated_request.amount_of_meals,
@@ -122,11 +122,11 @@ def update_request(request_id):
 
 
 # ===================== מחיקת בקשה =====================
-@ds_request_bp.route('/<int:request_id>', methods=['DELETE'])
+@dc_request_bp.route('/<int:request_id>', methods=['DELETE'])
 def delete_request(request_id):
     db_session = SessionLocal()
     try:
-        repo = DSRequestRepository(db_session)
+        repo = DCRequestRepository(db_session)
         success = repo.delete_request(request_id)
         if not success:
             return jsonify({'error': 'Request not found'}), 404

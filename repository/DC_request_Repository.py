@@ -1,8 +1,8 @@
 from sqlalchemy.orm import Session
-from models.DS_request import DS_Request
+from models.DC_request import DC_Request
 from datetime import datetime
 
-class DSRequestRepository:
+class DCRequestRepository:
     def __init__(self, db: Session):
         self.db = db
 
@@ -13,10 +13,10 @@ class DSRequestRepository:
         amount_of_meals: int,
         type: int = 0,
         request_date: datetime = None
-    ) -> DS_Request:
+    ) -> DC_Request:
         if request_date is None:
             request_date = datetime.now()
-        new_request = DS_Request(
+        new_request = DC_Request(
             DistributionCenterID=distribution_center_id,
             amount_of_meals=amount_of_meals,
             type=type,
@@ -28,12 +28,12 @@ class DSRequestRepository:
         return new_request
 
     # קבלת בקשה לפי ID
-    def get_request(self, request_id: int) -> DS_Request | None:
-        return self.db.query(DS_Request).filter(DS_Request.id == request_id).first()
+    def get_request(self, request_id: int) -> DC_Request | None:
+        return self.db.query(DC_Request).filter(DC_Request.id == request_id).first()
 
     # קבלת כל הבקשות
-    def get_all_requests(self) -> list[DS_Request]:
-        return self.db.query(DS_Request).all()
+    def get_all_requests(self) -> list[DC_Request]:
+        return self.db.query(DC_Request).all()
 
     # עדכון בקשה
     def update_request(
@@ -42,7 +42,7 @@ class DSRequestRepository:
         amount_of_meals: int = None,
         type: int = None,
         request_date: datetime = None
-    ) -> DS_Request | None:
+    ) -> DC_Request | None:
         request = self.get_request(request_id)
         if request:
             if amount_of_meals is not None:

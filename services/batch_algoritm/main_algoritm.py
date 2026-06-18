@@ -1,6 +1,6 @@
 from collections import deque
 from repository.recipient_request_repository import RecipientRequestRepository
-from repository.DS_request_Repository import DSRequestRepository
+from repository.DC_request_Repository import DCRequestRepository
 from services.batch_algoritm.matching_algorithm import (
     build_candidates_for_centers,
     sort_center_candidates,
@@ -28,11 +28,11 @@ def run_full_matching(db):
     recipient_requests_dict = {r.RecipientID: r for r in recipient_requests}
 
     # חשוב: נביא את כל ה-DS requests פעם אחת
-    ds_request_repo = DSRequestRepository(db)
-    ds_requests = ds_request_repo.get_all_requests()
-    ds_requests_dict = {
+    dc_request_repo = DCRequestRepository(db)
+    dc_requests = dc_request_repo.get_all_requests()
+    dc_requests_dict = {
         r.DistributionCenterID: r
-        for r in ds_requests
+        for r in dc_requests
     }
 
     while queue and len(recipient_assignment) < total_recipients:
@@ -48,8 +48,8 @@ def run_full_matching(db):
         if recipient_id not in recipient_assignment:
 
             type = (
-                ds_requests_dict[center_id].type
-                if center_id in ds_requests_dict
+                dc_requests_dict[center_id].type
+                if center_id in dc_requests_dict
                 else 0
             )
 
@@ -72,8 +72,8 @@ def run_full_matching(db):
             if score < old_score:
 
                 type = (
-                    ds_requests_dict[center_id].type
-                    if center_id in ds_requests_dict
+                    dc_requests_dict[center_id].type
+                    if center_id in dc_requests_dict
                     else 0
                 )
 
@@ -98,7 +98,7 @@ def run_full_matching(db):
     # שלב 2: שיבוץ משני
     # =========================
     center_usage = build_center_usage(recipient_assignment)
-    remaining_meals_by_center = build_remaining_meals_by_center(center_usage, ds_requests_dict)
+    remaining_meals_by_center = build_remaining_meals_by_center(center_usage, dc_requests_dict)
 
     all_recipients = set(recipient_requests_dict.keys())
     assigned_recipients = set(recipient_assignment.keys())
@@ -129,8 +129,8 @@ def run_full_matching(db):
         if recipient_id not in recipient_assignment:
 
             type = (
-                ds_requests_dict[center_id].type
-                if center_id in ds_requests_dict
+                dc_requests_dict[center_id].type
+                if center_id in dc_requests_dict
                 else 0
             )
 
