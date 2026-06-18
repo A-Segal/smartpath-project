@@ -3,14 +3,23 @@ from repository.Volunteer_requestRepository import VolunteerRequestRepository
 from db_connection import SessionLocal
 from dto.volunteer_requestDTO import VolunteerRequestDTO
 from typing import List
+from services.real_time.route_engine import search_best_route
+from services.volunteer_route_service import build_initial_state
+from flask import Blueprint, request, jsonify
+from flask import Blueprint, jsonify
+from db_connection import SessionLocal
+from repository.Volunteer_requestRepository import VolunteerRequestRepository
+from repository.delivery_assignmentRepository import DeliveryAssignmentRepository
+from services.volunteer_route_service import run_volunteer_route
+from services.utils.googleMaps import travel_time_between_points
 
-
-# Blueprint עבור VolunteerRequest
 volunteer_request_bp = Blueprint(
     'volunteer_request_bp',
     __name__,
     url_prefix='/volunteer_request'
 )
+
+
 
 
 # ==================== יצירת בקשה (POST) ====================
@@ -132,5 +141,33 @@ def delete_volunteer_request(request_id):
             return jsonify({'error': 'VolunteerRequest not found'}), 404
 
         return jsonify({'message': 'VolunteerRequest deleted successfully'})
+    finally:
+        db_session.close()
+
+
+# =========================
+# Run VRP Route (MAIN ENDPOINT)
+# =========================
+@volunteer_request_bp.route('/run_route/<int:volunteer_id>', methods=['POST'])
+def run_route(volunteer_id):
+    db_session = SessionLocal()
+
+    try:
+        volunteer_repo = VolunteerRequestRepository(db_session)
+        group_repo = DeliveryAssignmentRepository(db_session)
+
+        result = run_volunteer_route(
+            volunteer_id=volunteer_id,
+            volunteer_repo=volunteer_repo,
+            group_repo=group_repo,
+            google_maps_service=travel_time_between_points
+        )
+
+        return jsonify({
+            "route": result["route"],
+            "total_time": result["current_time"],
+            "total_meals": result["current_meals"]
+        }), 200
+
     finally:
         db_session.close()

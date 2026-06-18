@@ -1,25 +1,39 @@
+from collections import deque
 from services.real_time.route_engine import expand_state
 
-# the func Finds the best possible route for a volunteer using state-space search (VRP optimization)
+
+# =========================
+# VRP Search Engine
+# =========================
 def search_best_route(initial_state, groups, google_maps_service):
     """
-    Main VRP engine that finds the optimal delivery route.
-
-    Objective:
-    1. Maximize number of groups served
-    2. Minimize total time (tie breaker)
+    Finds optimal route:
+    1. Max groups served
+    2. Min time (tie breaker)
     """
 
-    from collections import deque
-
-    queue = deque()
-    queue.append(initial_state)
+    queue = deque([initial_state])
 
     best_state = initial_state
+
+    # חשוב: pruning memory
+    visited = {}
 
     while queue:
 
         state = queue.popleft()
+
+        key = (
+            tuple(state["route"]),
+            state["current_meals"]
+        )
+
+        # pruning: אם ראינו מצב טוב יותר → דלג
+        if key in visited:
+            if visited[key] <= state["current_time"]:
+                continue
+
+        visited[key] = state["current_time"]
 
         next_states = expand_state(state, groups, google_maps_service)
 
@@ -27,7 +41,7 @@ def search_best_route(initial_state, groups, google_maps_service):
 
             queue.append(new_state)
 
-            # update best solution
+            # עדכון פתרון מיטבי
             if (
                 len(new_state["route"]) > len(best_state["route"])
                 or (
