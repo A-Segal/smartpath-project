@@ -5,9 +5,8 @@ from flask import Blueprint, jsonify
 from db_connection import SessionLocal
 from repository.Volunteer_requestRepository import VolunteerRequestRepository
 from repository.delivery_assignmentRepository import DeliveryAssignmentRepository
-from services.volunteer_route_service import run_volunteer_route
 from services.utils.googleMaps import travel_time_between_points
-
+from services.volunteer_route_service import run_volunteer_route
 volunteer_request_bp = Blueprint(
     'volunteer_request_bp',
     __name__,
@@ -158,11 +157,7 @@ def run_route(volunteer_id):
             google_maps_service=travel_time_between_points
         )
 
-        return jsonify({
-            "route": result["route"],
-            "total_time": result["current_time"],
-            "total_meals": result["current_meals"]
-        }), 200
+        return jsonify(result), 200
 
     finally:
         db_session.close()

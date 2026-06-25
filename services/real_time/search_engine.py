@@ -1,22 +1,17 @@
 from collections import deque
 from services.real_time.route_engine import expand_state
 
-
-# =========================
-# VRP Search Engine
-# =========================
-def search_best_route(initial_state, groups, google_maps_service):
+def search_best_route(initial_state, groups, travel_service):
     """
-    Finds optimal route:
-    1. Max groups served
-    2. Min time (tie breaker)
+    אלגוריתם חיפוש ראשי עם:
+    - בדיקות חוקיות בסיסיות
+    - pruning ראשוני
     """
 
     queue = deque([initial_state])
-
     best_state = initial_state
 
-    # חשוב: pruning memory
+    # מניעת חזרות בסיסית
     visited = {}
 
     while queue:
@@ -28,14 +23,14 @@ def search_best_route(initial_state, groups, google_maps_service):
             state["current_meals"]
         )
 
-        # pruning: אם ראינו מצב טוב יותר → דלג
+        # אם כבר ראינו מצב טוב יותר → דילוג
         if key in visited:
             if visited[key] <= state["current_time"]:
                 continue
 
         visited[key] = state["current_time"]
 
-        next_states = expand_state(state, groups, google_maps_service)
+        next_states = expand_state(state, groups, travel_service)
 
         for new_state in next_states:
 

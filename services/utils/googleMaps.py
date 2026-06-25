@@ -2,7 +2,7 @@
 import requests
 from math import radians, cos, sin, sqrt, atan2
 
-API_KEY = "AIzaSyBNVjEXhyDOUvcCECJFY5x_OGKt38dxVBk"
+API_KEY = "AIzaSyAKmXqHHc8_vOP30aKSKvV2C3sH2c67fqY"
 
 
 # =========================
