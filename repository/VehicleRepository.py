@@ -38,3 +38,10 @@ class VehicleRepository:
         for vehicle in vehicles:
             self.db.delete(vehicle)
         self.db.commit()
+
+    def get_by_volunteer_id(self, volunteer_id: int):
+        return (
+            self.db.query(Vehicle)
+            .filter(Vehicle.VolunteerID == volunteer_id)
+            .first()
+        )

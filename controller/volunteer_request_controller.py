@@ -4,9 +4,15 @@ from flask import Blueprint, request, jsonify
 from flask import Blueprint, jsonify
 from db_connection import SessionLocal
 from repository.Volunteer_requestRepository import VolunteerRequestRepository
-from repository.delivery_assignmentRepository import DeliveryAssignmentRepository
 from services.utils.googleMaps import travel_time_between_points
 from services.volunteer_route_service import run_volunteer_route
+
+
+
+from repository.VolunteerRepository import VolunteerRepository
+from repository.delivery_assignmentRepository import DeliveryAssignmentRepository
+from services.vrp.solver import solve
+# from services.volunteer_route_service import run_volunteer_route
 volunteer_request_bp = Blueprint(
     'volunteer_request_bp',
     __name__,
@@ -17,33 +23,29 @@ volunteer_request_bp = Blueprint(
 
 
 # ==================== יצירת בקשה (POST) ====================
-@volunteer_request_bp.route('', methods=['POST'])
-def create_volunteer_request():
-    db_session = SessionLocal()
+@volunteer_request_bp.route('/run_route/<int:volunteer_id>', methods=['POST'])
+def run_route(volunteer_id):
+    db = SessionLocal()
+
     try:
-        repo = VolunteerRequestRepository(db_session)
-        data = request.get_json()
+        data = request.get_json(silent=True) or {}
+        address = data.get("address")
 
-        request_obj = repo.create_volunteer_request(
-            volunteer_id=data.get('volunteer_id'),
-            location_lat=data.get('location_lat'),
-            location_lng=data.get('location_lng'),
-            available_time=data.get('available_time')
+        volunteer_repo = VolunteerRepository(db)
+        assignment_repo = DeliveryAssignmentRepository(db)
+
+        result = run_volunteer_route(
+            volunteer_id=volunteer_id,
+            volunteer_repo=volunteer_repo,
+            assignment_repo=assignment_repo,
+            google_maps_service=travel_time_between_points,
+            start_address=address
         )
 
-        dto = VolunteerRequestDTO(
-            id=request_obj.id,
-            volunteer_id=request_obj.volunteer_id,
-            location_lat=request_obj.location_lat,
-            location_lng=request_obj.location_lng,
-            available_time=request_obj.available_time
-        )
+        return jsonify(result), 200
 
-        return jsonify(dto.__dict__), 201
     finally:
-        db_session.close()
-
-
+        db.close()
 # ==================== קבלת בקשה לפי ID (GET) ====================
 @volunteer_request_bp.route('/<int:request_id>', methods=['GET'])
 def get_volunteer_request(request_id):
@@ -139,25 +141,25 @@ def delete_volunteer_request(request_id):
         db_session.close()
 
 
-# =========================
-# Run VRP Route (MAIN ENDPOINT)
-# =========================
-@volunteer_request_bp.route('/run_route/<int:volunteer_id>', methods=['POST'])
-def run_route(volunteer_id):
-    db_session = SessionLocal()
-
-    try:
-        volunteer_repo = VolunteerRequestRepository(db_session)
-        group_repo = DeliveryAssignmentRepository(db_session)
-
-        result = run_volunteer_route(
-            volunteer_id=volunteer_id,
-            volunteer_repo=volunteer_repo,
-            group_repo=group_repo,
-            google_maps_service=travel_time_between_points
-        )
-
-        return jsonify(result), 200
-
-    finally:
-        db_session.close()
+# # =========================
+# # Run VRP Route (MAIN ENDPOINT)
+# # =========================
+# @volunteer_request_bp.route('/run_route/<int:volunteer_id>', methods=['POST'])
+# def run_route(volunteer_id):
+#     db_session = SessionLocal()
+#
+#     try:
+#         volunteer_repo = VolunteerRequestRepository(db_session)
+#         group_repo = DeliveryAssignmentRepository(db_session)
+#
+#         result = run_volunteer_route(
+#             volunteer_id=volunteer_id,
+#             volunteer_repo=volunteer_repo,
+#             group_repo=group_repo,
+#             google_maps_service=travel_time_between_points
+#         )
+#
+#         return jsonify(result), 200
+#
+#     finally:
+#         db_session.close()

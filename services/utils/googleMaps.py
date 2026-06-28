@@ -17,7 +17,7 @@ def geocode_address(address: str):
     response = requests.get(url)
     data = response.json()
 
-    if data['status'] != 'OK' or not data['results']:
+    if data.get("status") != "OK" or not data['results']:
         return {"error": "כתובת לא נמצאה"}
 
     location = data['results'][0]['geometry']['location']
@@ -45,25 +45,31 @@ def distance_between_points(lat1, lng1, lat2, lng2):
 # =========================
 def travel_time_between_points(lat1, lng1, lat2, lng2, mode="driving"):
     """
-    מחזיר זמן נסיעה בדקות בין שתי נקודות
-    mode: driving, walking, bicycling, transit
+    מחזיר זמן נסיעה בדקות (float בלבד)
     """
+
     origins = f"{lat1},{lng1}"
     destinations = f"{lat2},{lng2}"
-    url = f"https://maps.googleapis.com/maps/api/distancematrix/json?origins={origins}&destinations={destinations}&mode={mode}&key={API_KEY}&language=iw"
+
+    url = (
+        "https://maps.googleapis.com/maps/api/distancematrix/json"
+        f"?origins={origins}&destinations={destinations}"
+        f"&mode={mode}&key={API_KEY}&language=iw"
+    )
+
     response = requests.get(url)
     data = response.json()
 
-    if data['status'] != 'OK':
-        return {"error": "בעיה בבקשה"}
+    if data.get('status') != 'OK':
+        return 999999  # fallback בטוח
 
     element = data['rows'][0]['elements'][0]
-    if element['status'] != 'OK':
-        return {"error": "נתיב לא נמצא"}
 
-    distance_km = element['distance']['value'] / 1000  # מטר -> ק"מ
-    duration_min = element['duration']['value'] / 60  # שניות -> דקות
-    return {"distance_km": distance_km, "duration_min": duration_min}
+    if element.get('status') != 'OK':
+        return 999999  # fallback בטוח
+
+    # זמן נסיעה בדקות בלבד
+    return element['duration']['value'] / 60
 
 
 # =========================

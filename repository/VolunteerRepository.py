@@ -88,3 +88,6 @@ class VolunteerRepository:
             self.db.commit()
             return True
         return False
+
+    def get_by_id(self, volunteerID: int) -> Volunteer | None:
+        return self.get_volunteer(volunteerID)

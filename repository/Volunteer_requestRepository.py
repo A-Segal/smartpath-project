@@ -66,3 +66,10 @@ class VolunteerRequestRepository:
             self.db.commit()
             return True
         return False
+
+    def get_by_volunteer_id(self, volunteer_id: int) -> VolunteerRequest | None:
+        return (
+            self.db.query(VolunteerRequest)
+            .filter(VolunteerRequest.volunteer_id == volunteer_id)
+            .first()
+        )
