@@ -43,34 +43,47 @@ def distance_between_points(lat1, lng1, lat2, lng2):
 # =========================
 # פונקציה 3: זמן נסיעה בין שתי נקודות (Google Distance Matrix)
 # =========================
+import requests
+
 def travel_time_between_points(lat1, lng1, lat2, lng2, mode="driving"):
-    """
-    מחזיר זמן נסיעה בדקות (float בלבד)
-    """
+    try:
+        origins = f"{lat1},{lng1}"
+        destinations = f"{lat2},{lng2}"
 
-    origins = f"{lat1},{lng1}"
-    destinations = f"{lat2},{lng2}"
+        url = (
+            "https://maps.googleapis.com/maps/api/distancematrix/json"
+            f"?origins={origins}&destinations={destinations}"
+            f"&mode={mode}&key={API_KEY}&language=iw"
+        )
 
-    url = (
-        "https://maps.googleapis.com/maps/api/distancematrix/json"
-        f"?origins={origins}&destinations={destinations}"
-        f"&mode={mode}&key={API_KEY}&language=iw"
-    )
+        response = requests.get(url, timeout=5)
+        data = response.json()
 
-    response = requests.get(url)
-    data = response.json()
+        if data.get("status") != "OK":
+            return 999999
 
-    if data.get('status') != 'OK':
-        return 999999  # fallback בטוח
+        rows = data.get("rows", [])
+        if not rows:
+            return 999999
 
-    element = data['rows'][0]['elements'][0]
+        elements = rows[0].get("elements", [])
+        if not elements:
+            return 999999
 
-    if element.get('status') != 'OK':
-        return 999999  # fallback בטוח
+        element = elements[0]
 
-    # זמן נסיעה בדקות בלבד
-    return element['duration']['value'] / 60
+        if element.get("status") != "OK":
+            return 999999
 
+        duration = element.get("duration", {}).get("value")
+
+        if not duration:
+            return 999999
+
+        return duration / 60
+
+    except Exception:
+        return 999999
 
 # =========================
 # פונקציה 4: קבלת אזור/יישוב/מחוז
@@ -98,3 +111,18 @@ def get_region_from_address(address: str):
             region['country'] = comp['long_name']
 
     return region
+
+def safe_travel_time(lat1, lng1, lat2, lng2, google_maps_service):
+    try:
+        result = google_maps_service(lat1, lng1, lat2, lng2)
+
+        if isinstance(result, dict):
+            return result.get("duration_min", 999)
+
+        if isinstance(result, (int, float)):
+            return float(result)
+
+        return 999
+
+    except:
+        return 999

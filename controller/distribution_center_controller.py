@@ -3,6 +3,7 @@ from repository.distribution_centerRepository import DistributionCenterRepositor
 from db_connection import SessionLocal
 from dto.distribution_centerDTO import DistributionCenterDTO  # נניח שיש קובץ DTO
 from typing import List
+from services.utils.googleMaps import geocode_address
 
 # Blueprint עבור DistributionCenter
 distribution_center_bp = Blueprint('distribution_center_bp', __name__, url_prefix='/distribution_center')
@@ -15,6 +16,18 @@ def add_distribution_center():
         repo = DistributionCenterRepository(db_session)
         data = request.get_json()
 
+        lat = data.get('location_lat')
+        lng = data.get('location_lng')
+
+        # אם יש כתובת טקסט
+        if data.get('address'):
+            geo = geocode_address(data['address'])
+            if "error" in geo:
+                return jsonify({"error": "כתובת לא תקינה"}), 400
+
+            lat = geo['lat']
+            lng = geo['lng']
+
         new_center = repo.create_distribution_center(
             fname=data['fname'],
             lname=data['lname'],
@@ -22,10 +35,9 @@ def add_distribution_center():
             password=data['password'],
             mail=data['mail'],
             phone=data['phone'],
-            location_lat=data['location_lat'],
-            location_lng=data['location_lng'],
+            location_lat=lat,
+            location_lng=lng,
             meal_count=data.get('meal_count', 0)
-
         )
 
         dto = DistributionCenterDTO(
@@ -40,9 +52,9 @@ def add_distribution_center():
         )
 
         return jsonify(dto.__dict__), 201
+
     finally:
         db_session.close()
-
 # ==================== קבלת מרכז לפי ID (GET) ====================
 @distribution_center_bp.route('/<int:center_id>', methods=['GET'])
 def get_distribution_center(center_id):

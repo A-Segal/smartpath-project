@@ -17,6 +17,8 @@ def run_full_matching(db):
     candidates = build_candidates_for_centers(db)
     candidates = sort_center_candidates(candidates)
 
+
+
     queue = deque(candidates.keys())
     current_index = {center_id: 0 for center_id in candidates}
     recipient_assignment = {}
@@ -25,11 +27,16 @@ def run_full_matching(db):
     recipient_request_repo = RecipientRequestRepository(db)
     recipient_requests = recipient_request_repo.get_all_requests()
     total_recipients = len(recipient_requests)
+
+
     recipient_requests_dict = {r.RecipientID: r for r in recipient_requests}
 
     # חשוב: נביא את כל ה-DS requests פעם אחת
     dc_request_repo = DCRequestRepository(db)
     dc_requests = dc_request_repo.get_all_requests()
+
+
+
     dc_requests_dict = {
         r.DistributionCenterID: r
         for r in dc_requests
@@ -47,8 +54,8 @@ def run_full_matching(db):
 
         if recipient_id not in recipient_assignment:
 
-            type = (
-                dc_requests_dict[center_id].type
+            freshness_priority = (
+                dc_requests_dict[center_id].freshness_priority
                 if center_id in dc_requests_dict
                 else 0
             )
@@ -59,7 +66,7 @@ def run_full_matching(db):
                 "recipient_meals": recipient_meals,
                 "center_meals": center_meals,
                 "order": step_counter,
-                "type": type
+                "freshness_priority": freshness_priority
             }
 
             step_counter += 1
@@ -71,8 +78,8 @@ def run_full_matching(db):
 
             if score < old_score:
 
-                type = (
-                    dc_requests_dict[center_id].type
+                freshness_priority = (
+                    dc_requests_dict[center_id].freshness_priority
                     if center_id in dc_requests_dict
                     else 0
                 )
@@ -83,7 +90,7 @@ def run_full_matching(db):
                     "recipient_meals": recipient_meals,
                     "center_meals": center_meals,
                     "order": step_counter,
-                    "type": type
+                    "freshness_priority": freshness_priority
                 }
 
                 step_counter += 1
@@ -128,8 +135,8 @@ def run_full_matching(db):
 
         if recipient_id not in recipient_assignment:
 
-            type = (
-                dc_requests_dict[center_id].type
+            freshness_priority = (
+                dc_requests_dict[center_id].freshness_priority
                 if center_id in dc_requests_dict
                 else 0
             )
@@ -140,7 +147,7 @@ def run_full_matching(db):
                 "recipient_meals": recipient_meals,
                 "center_meals": remaining_meals,
                 "order": step_counter,
-                "type": type
+                "freshness_priority": freshness_priority
             }
 
             step_counter += 1

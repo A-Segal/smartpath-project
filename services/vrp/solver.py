@@ -109,8 +109,8 @@ def solve(
             if g["center_id"] in visited:
                 continue
 
-            if g["total_meals"] > max_capacity:
-                continue
+            # if g["total_meals"] > max_capacity:
+            #     continue
 
             result = google_maps_service(
                 current_location["lat"],

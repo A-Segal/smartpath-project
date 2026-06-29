@@ -18,7 +18,7 @@ class DeliveryAssignmentRepository:
         RecipientID: int,
         VolunteerID: int,
         amount_of_meals: int,
-        type: int,
+        freshness_priority: int,
     ) -> DeliveryAssignment:
 
         assignment = DeliveryAssignment(
@@ -26,7 +26,7 @@ class DeliveryAssignmentRepository:
             RecipientID=RecipientID,
             VolunteerID=VolunteerID,
             amount_of_meals=amount_of_meals,
-            type=type
+            freshness_priority=freshness_priority
         )
 
         self.db.add(assignment)

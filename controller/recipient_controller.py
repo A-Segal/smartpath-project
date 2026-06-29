@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify
 from repository.recipientRepository import RecipientRepository
 from db_connection import SessionLocal
 from dto.recipientDTO import RecipientDTO
-
+from services.utils.googleMaps import geocode_address
 # Blueprint עבור Recipients
 recipient_bp = Blueprint('recipient_bp', __name__, url_prefix='/recipients')
 
@@ -25,6 +25,19 @@ def add_recipient():
     try:
         repo = RecipientRepository(db_session)
         data = request.get_json()
+
+        lat = data.get('location_lat')
+        lng = data.get('location_lng')
+
+        # אם נשלחה כתובת טקסט
+        if data.get('address'):
+            geo = geocode_address(data['address'])
+            if "error" in geo:
+                return jsonify({"error": "כתובת לא תקינה"}), 400
+
+            lat = geo['lat']
+            lng = geo['lng']
+
         new_recipient = repo.create_recipient(
             fname=data['fname'],
             lname=data['lname'],
@@ -32,11 +45,13 @@ def add_recipient():
             password=data['password'],
             mail=data.get('mail'),
             phone=data.get('phone'),
-            location_lat=data.get('location_lat'),
-            location_lng=data.get('location_lng')
+            location_lat=lat,
+            location_lng=lng
         )
+
         dto = recipient_to_dto(new_recipient)
         return jsonify(dto.__dict__), 201
+
     finally:
         db_session.close()
 

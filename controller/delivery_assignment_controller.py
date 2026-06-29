@@ -42,7 +42,7 @@ def get_delivery_assignment(assignment_id):
             RecipientID=assignment.RecipientID,
             VolunteerID=assignment.VolunteerID,
             amount_of_meals=assignment.amount_of_meals,
-            type=assignment.type
+            freshness_priority=assignment.freshness_priority
         )
 
         return jsonify(dto.__dict__)
@@ -65,7 +65,7 @@ def get_all_delivery_assignments():
                 RecipientID=a.RecipientID,
                 VolunteerID=a.VolunteerID,
                 amount_of_meals=a.amount_of_meals,
-                type=a.type
+                freshness_priority=a.freshness_priority
             ).__dict__ for a in assignments
         ]
 
@@ -88,7 +88,7 @@ def update_delivery_assignment(assignment_id):
             RecipientID=data.get('RecipientID'),
             VolunteerID=data.get('VolunteerID'),
             amount_of_meals=data.get('amount_of_meals'),
-            type=data.get('type')
+            freshness_priority=data.get('freshness_priority')
         )
 
         if not updated:
@@ -100,7 +100,7 @@ def update_delivery_assignment(assignment_id):
             RecipientID=updated.RecipientID,
             VolunteerID=updated.VolunteerID,
             amount_of_meals=updated.amount_of_meals,
-            type=updated.type
+            freshness_priority=updated.freshness_priority
         )
 
         return jsonify(dto.__dict__)
