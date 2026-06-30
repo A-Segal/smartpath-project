@@ -46,44 +46,36 @@ def distance_between_points(lat1, lng1, lat2, lng2):
 import requests
 
 def travel_time_between_points(lat1, lng1, lat2, lng2, mode="driving"):
-    try:
-        origins = f"{lat1},{lng1}"
-        destinations = f"{lat2},{lng2}"
+    import requests
 
-        url = (
-            "https://maps.googleapis.com/maps/api/distancematrix/json"
-            f"?origins={origins}&destinations={destinations}"
-            f"&mode={mode}&key={API_KEY}&language=iw"
-        )
+    print("CALLING GOOGLE MAPS")
 
-        response = requests.get(url, timeout=5)
-        data = response.json()
+    origins = f"{lat1},{lng1}"
+    destinations = f"{lat2},{lng2}"
 
-        if data.get("status") != "OK":
-            return 999999
+    url = (
+        "https://maps.googleapis.com/maps/api/distancematrix/json"
+        f"?origins={origins}&destinations={destinations}"
+        f"&mode={mode}&key={API_KEY}"
+    )
 
-        rows = data.get("rows", [])
-        if not rows:
-            return 999999
+    response = requests.get(url)
+    data = response.json()
 
-        elements = rows[0].get("elements", [])
-        if not elements:
-            return 999999
+    print("GOOGLE STATUS:", data.get("status"))
+    print("FULL RESPONSE:", data)
 
-        element = elements[0]
+    if data.get('status') != 'OK':
+        return 0   # ⚠️ לא 999999!
 
-        if element.get("status") != "OK":
-            return 999999
+    element = data['rows'][0]['elements'][0]
 
-        duration = element.get("duration", {}).get("value")
+    print("ELEMENT STATUS:", element.get("status"))
 
-        if not duration:
-            return 999999
+    if element.get('status') != 'OK':
+        return 0
 
-        return duration / 60
-
-    except Exception:
-        return 999999
+    return element['duration']['value'] / 60
 
 # =========================
 # פונקציה 4: קבלת אזור/יישוב/מחוז

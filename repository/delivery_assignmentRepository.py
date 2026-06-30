@@ -119,24 +119,39 @@ class DeliveryAssignmentRepository:
 
         return list(groups.values())
 
-
     def build_groups(self):
-        rows = self.db.query(DeliveryAssignment)\
-            .filter(DeliveryAssignment.VolunteerID.is_(None))\
+
+        rows = self.db.query(DeliveryAssignment) \
+            .filter(DeliveryAssignment.VolunteerID.is_(None)) \
             .all()
+
+        if not rows:
+            return []
+
+        # preload centers & recipients (חשוב מאוד)
+        center_ids = list(set(r.DistributionCenterID for r in rows))
+        recipient_ids = list(set(r.RecipientID for r in rows))
+
+        centers = {
+            c.id: c for c in self.db.query(DistributionCenter)
+            .filter(DistributionCenter.id.in_(center_ids))
+            .all()
+        }
+
+        recipients = {
+            r.id: r for r in self.db.query(Recipient)
+            .filter(Recipient.id.in_(recipient_ids))
+            .all()
+        }
 
         groups = {}
 
         for r in rows:
 
-            center = self.db.query(DistributionCenter)\
-                .filter(DistributionCenter.id == r.DistributionCenterID)\
-                .first()
+            center = centers.get(r.DistributionCenterID)
+            recipient = recipients.get(r.RecipientID)
 
-            recipient = self.db.query(Recipient)\
-                .filter(Recipient.id == r.RecipientID)\
-                .first()
-
+            # ⚠️ לא לזרוק שורה — רק לדלג
             if not center or not recipient:
                 continue
 
@@ -158,6 +173,6 @@ class DeliveryAssignmentRepository:
             })
 
             groups[key]["assignment_ids"].append(r.id)
-            groups[key]["total_meals"] += r.amount_of_meals
+            groups[key]["total_meals"] += r.amount_of_meals or 0
 
         return list(groups.values())
