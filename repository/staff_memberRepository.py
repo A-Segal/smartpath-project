@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 from models.staff_member import StaffMember
+from services.utils.auth_utils import hash_password, verify_password
 
 class StaffMemberRepository:
     def __init__(self, db: Session):
@@ -19,7 +20,7 @@ class StaffMemberRepository:
             fname=fname,
             lname=lname,
             username=username,
-            password=password,
+            password=hash_password(password),
             PermissionID=PermissionID,
             mail=mail,
             phone=phone
@@ -55,7 +56,7 @@ class StaffMemberRepository:
             if username is not None:
                 staff_member.username = username
             if password is not None:
-                staff_member.password = password
+                staff_member.password = hash_password(password)
             if PermissionID is not None:
                 staff_member.PermissionID = PermissionID
             if mail is not None:

@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from models.volunteer import Volunteer
 from repository.VehicleRepository import VehicleRepository
+from services.utils.auth_utils import hash_password, verify_password
 
 
 class VolunteerRepository:
@@ -22,7 +23,7 @@ class VolunteerRepository:
             fname=fname,
             lname=lname,
             username=username,
-            password=password,
+            password=hash_password(password),
             mail=mail,
             phone=phone
         )
@@ -42,10 +43,12 @@ class VolunteerRepository:
         return self.db.query(Volunteer).filter(Volunteer.id == volunteerID).first()
 
     def get_by_username_password(self, username, password):
-        return self.db.query(Volunteer).filter_by(
-            username=username,
-            password=password
-        ).first()
+        """מחזיר מתנדב אם הסיסמה תואמת, אחרת None"""
+        volunteer = self.db.query(Volunteer).filter_by(username=username).first()
+        if volunteer and verify_password(password, volunteer.password):
+            return volunteer
+        return None
+
     def get_all_volunteers(self) -> list[Volunteer]:
         return self.db.query(Volunteer).all()
 
@@ -68,7 +71,7 @@ class VolunteerRepository:
             if username is not None:
                 volunteer.username = username
             if password is not None:
-                volunteer.password = password
+                volunteer.password = hash_password(password)
             if mail is not None:
                 volunteer.mail = mail
             if phone is not None:

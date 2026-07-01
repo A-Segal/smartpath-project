@@ -6,12 +6,8 @@ from typing import List
 from services.delivery_assignment_service import create_assignments_from_matching
 
 
-
 # Blueprint עבור DeliveryAssignment
 delivery_assignment_bp = Blueprint('delivery_assignment_bp', __name__, url_prefix='/delivery_assignment')
-
-
-
 @delivery_assignment_bp.route('/run_matching', methods=['POST'])
 def run_matching_and_create_assignments():
     """

@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 from models.distribution_center import DistributionCenter
+from services.utils.auth_utils import hash_password, verify_password
 
 class DistributionCenterRepository:
     def __init__(self, db: Session):
@@ -21,7 +22,7 @@ class DistributionCenterRepository:
             fname=fname,
             lname=lname,
             username=username,
-            password=password,
+            password=hash_password(password),
             mail=mail,
             phone=phone,
             location_lat=location_lat,
@@ -36,10 +37,11 @@ class DistributionCenterRepository:
         return self.db.query(DistributionCenter).filter(DistributionCenter.id == centerID).first()
 
     def get_by_username_password(self, username, password):
-        return self.db.query(DistributionCenter).filter_by(
-            username=username,
-            password=password
-        ).first()
+        """מחזיר מרכז חלוקה אם הסיסמה תואמת, אחרת None"""
+        center = self.db.query(DistributionCenter).filter_by(username=username).first()
+        if center and verify_password(password, center.password):
+            return center
+        return None
     def get_all_distribution_centers(self) -> list[DistributionCenter]:
         return self.db.query(DistributionCenter).all()
 
@@ -64,7 +66,7 @@ class DistributionCenterRepository:
             if username is not None:
                 center.username = username
             if password is not None:
-                center.password = password
+                center.password = hash_password(password)
             if mail is not None:
                 center.mail = mail
             if phone is not None:

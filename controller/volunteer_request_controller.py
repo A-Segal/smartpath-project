@@ -30,16 +30,33 @@ def run_route(volunteer_id):
     try:
         data = request.get_json(silent=True) or {}
         address = data.get("address")
+        available_time = data.get("available_time")  # שעות (float)
 
         volunteer_repo = VolunteerRepository(db)
         assignment_repo = DeliveryAssignmentRepository(db)
+
+        # מיקום התחלתי — או מכתובת, או מ-VolunteerRequest, או מה-body
+        start_loc = None
+        if not address:
+            if data.get("lat") and data.get("lng"):
+                start_loc = {"lat": float(data["lat"]), "lng": float(data["lng"])}
+            else:
+                # נסה לקחת מה-VolunteerRequest העדכני ביותר
+                vr_repo = VolunteerRequestRepository(db)
+                vr = vr_repo.get_by_volunteer_id(volunteer_id)
+                if vr and vr.location_lat and vr.location_lng:
+                    start_loc = {"lat": float(vr.location_lat), "lng": float(vr.location_lng)}
+                    if not available_time:
+                        available_time = vr.available_time
 
         result = run_volunteer_route(
             volunteer_id=volunteer_id,
             volunteer_repo=volunteer_repo,
             assignment_repo=assignment_repo,
             google_maps_service=travel_time_between_points,
-            start_address=address
+            start_address=address,
+            start_location_param=start_loc,
+            available_time=available_time,
         )
 
         return jsonify(result), 200

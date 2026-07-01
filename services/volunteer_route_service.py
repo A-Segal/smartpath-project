@@ -1,4 +1,5 @@
 from services.vrp.solver import solve
+from services.vrp.vrp_state import get_group_families, VEHICLE_CAPACITY
 from services.utils.googleMaps import (
     geocode_address,
     travel_time_between_points
@@ -6,13 +7,7 @@ from services.utils.googleMaps import (
 
 
 def get_capacity(vehicle_type):
-    return {
-        1: 1,
-        2: 3,
-        3: 6,
-        4: 10,
-        5: 20
-    }.get(vehicle_type, 3)
+    return VEHICLE_CAPACITY.get(vehicle_type, 3)
 
 
 # =========================
@@ -77,9 +72,22 @@ def run_volunteer_route(
     volunteer_repo,
     assignment_repo,
     google_maps_service=None,
-    start_address=None
+    start_address=None,
+    start_location_param=None,
+    available_time=None,
 ):
+    """
+    מריץ את אלגוריתם ה-VRP עבור מתנדב.
 
+    Parameters
+    ----------
+    start_address : str | None
+        כתובת טקסטואלית. עובר geocoding.
+    start_location_param : dict | None
+        מיקום מוכן {"lat": ..., "lng": ...}. עוקף את ה-geocoding.
+    available_time : float | None
+        זמן פנוי בשעות. אם None — משתמש ב-default גבוה (אין הגבלת זמן).
+    """
     print("=== START ROUTE DEBUG ===")
 
     # 1. VOLUNTEER
@@ -94,11 +102,10 @@ def run_volunteer_route(
             return {"error": "geocode failed", "details": geo}
 
         start_location = {"lat": geo["lat"], "lng": geo["lng"]}
+    elif start_location_param is not None:
+        start_location = start_location_param
     else:
-        start_location = {
-            "lat": float(volunteer.location_lat),
-            "lng": float(volunteer.location_lng)
-        }
+        return {"error": "no start location — provide address or location"}
 
     # 3. GROUPS
     groups = assignment_repo.build_groups()
@@ -122,15 +129,24 @@ def run_volunteer_route(
 
     # 4. VEHICLE CAPACITY
     vehicle = getattr(volunteer, "vehicle", None)
-    vehicle_type = getattr(vehicle, "type", 3)
+    # vehicle.capacity = סוג הרכב (1-5)
+    vehicle_type = getattr(vehicle, "capacity", 3) if vehicle else 3
     vehicle_capacity = get_capacity(vehicle_type)
 
-    # 5. SOLVER
+    # 5. AVAILABLE TIME — המרה משעות לדקות
+    if available_time is not None:
+        available_time_minutes = available_time * 60  # שעות → דקות
+    else:
+        available_time_minutes = 999999  # אין הגבלה
+
+    print(f"Available time: {available_time_minutes} min (from {available_time} hours)")
+
+    # 6. SOLVER
     result = solve(
         groups=groups,
         start_location=start_location,
         max_capacity=vehicle_capacity,
-        available_time=999999,
+        available_time=available_time_minutes,
         google_maps_service=travel_time_between_points
     )
 
@@ -148,10 +164,10 @@ def run_volunteer_route(
             "message": "no feasible route found"
         }
 
-    # 6. BUILD UI ROUTE
+    # 7. BUILD UI ROUTE
     detailed_route = build_detailed_route(route, groups, start_location)
 
-    # 7. ASSIGNMENTS
+    # 8. ASSIGNMENTS
     for g in groups:
         if g["center_id"] in route:
             for assignment_id in g.get("assignment_ids", []):
@@ -162,7 +178,7 @@ def run_volunteer_route(
                         volunteer_id
                     )
 
-    # 8. RESPONSE
+    # 9. RESPONSE
     return {
         "volunteer_id": volunteer.id,
         "start_location": start_location,
@@ -170,197 +186,7 @@ def run_volunteer_route(
         "detailed_route": detailed_route,
         "groups_count": len(groups),
         "vehicle_capacity": vehicle_capacity,
-        "total_meals": result.get("total_meals", 0),
+        "total_deliveries": result.get("total_deliveries", 0),
+        "final_time_minutes": result.get("final_time", 0),
         "visited_count": len(route)
     }
-
-
-
-# from services.vrp.solver import solve
-# from services.utils.googleMaps import (
-#     geocode_address,
-#     travel_time_between_points
-# )
-#
-#
-# # =========================
-# # VEHICLE CAPACITY MAP
-# # =========================
-# def get_capacity(vehicle_type):
-#     return {
-#         1: 1,
-#         2: 3,
-#         3: 6,
-#         4: 10,
-#         5: 20
-#     }.get(vehicle_type, 3)
-#
-#
-# # =========================
-# # NORMALIZE GROUPS
-# # =========================
-# def normalize_groups(groups):
-#     clean = []
-#
-#     for g in groups:
-#         if not isinstance(g, dict):
-#             continue
-#         if not g.get("center_id"):
-#             continue
-#
-#         recipients = g.get("recipients_locations", [])
-#
-#         g["group_families"] = len(recipients)
-#
-#         if "total_meals" not in g or g["total_meals"] == 0:
-#             g["total_meals"] = g["group_families"]
-#
-#         clean.append(g)
-#
-#     return clean
-#
-#
-# # =========================
-# # BUILD DETAILED ROUTE
-# # =========================
-# def build_detailed_route(route, groups, start_location):
-#     group_map = {g["center_id"]: g for g in groups}
-#
-#     detailed = []
-#
-#     # start node
-#     detailed.append({
-#         "step": 0,
-#         "type": "start",
-#         "center_id": None,
-#         "assignment_id": None,
-#         "lat": start_location["lat"],
-#         "lng": start_location["lng"]
-#     })
-#
-#     step = 1
-#
-#     for center_id in route:
-#         g = group_map.get(center_id)
-#         if not g:
-#             continue
-#
-#         # center step
-#         detailed.append({
-#             "step": step,
-#             "type": "center",
-#             "center_id": center_id,
-#             "assignment_id": None,
-#             "lat": g["center_lat"],
-#             "lng": g["center_lng"]
-#         })
-#         step += 1
-#
-#         # recipients steps
-#         for aid, loc in zip(
-#             g.get("assignment_ids", []),
-#             g.get("recipients_locations", [])
-#         ):
-#             detailed.append({
-#                 "step": step,
-#                 "type": "recipient",
-#                 "center_id": center_id,
-#                 "assignment_id": aid,
-#                 "lat": loc["lat"],
-#                 "lng": loc["lng"]
-#             })
-#             step += 1
-#
-#     return detailed
-#
-#
-# # =========================
-# # MAIN SERVICE
-# # =========================
-# def run_volunteer_route(
-#     volunteer_id,
-#     volunteer_repo,
-#     assignment_repo,
-#     google_maps_service=None,
-#     start_address=None
-# ):
-#
-#     print("=== ROUTE SERVICE START ===")
-#
-#     # 1. volunteer
-#     volunteer = volunteer_repo.get_volunteer(volunteer_id)
-#     if not volunteer:
-#         return {"error": "volunteer not found"}
-#
-#     # 2. start location
-#     if start_address:
-#         geo = geocode_address(start_address)
-#         if not geo or "error" in geo:
-#             return {"error": "geocode failed"}
-#         start_location = {"lat": geo["lat"], "lng": geo["lng"]}
-#     else:
-#         start_location = {
-#             "lat": float(volunteer.location_lat),
-#             "lng": float(volunteer.location_lng)
-#         }
-#
-#     # 3. groups
-#     groups = assignment_repo.build_groups()
-#     groups = normalize_groups(groups)
-#
-#     if not groups:
-#         return {"error": "no groups"}
-#
-#     print("GROUPS:", len(groups))
-#
-#     # 4. capacity
-#     vehicle = getattr(volunteer, "vehicle", None)
-#     vehicle_type = getattr(vehicle, "type", 3)
-#     capacity = get_capacity(vehicle_type)
-#
-#     print("CAPACITY:", capacity)
-#
-#     # 5. solve
-#     result = solve(
-#         groups=groups,
-#         start_location=start_location,
-#         max_capacity=capacity,
-#         available_time=999999,
-#         google_maps_service=travel_time_between_points
-#     )
-#
-#     route = result.get("route", [])
-#
-#     # fallback
-#     if not route:
-#         return {
-#             "volunteer_id": volunteer.id,
-#             "start_location": start_location,
-#             "route": [],
-#             "detailed_route": [],
-#             "message": "no feasible route found"
-#         }
-#
-#     # 6. detailed route (FOR REACT / GOOGLE MAPS)
-#     detailed_route = build_detailed_route(route, groups, start_location)
-#
-#     # 7. assign to DB
-#     for g in groups:
-#         if g["center_id"] in route:
-#             for aid in g.get("assignment_ids", []):
-#                 assignment = assignment_repo.get_delivery_assignment(aid)
-#                 if assignment and assignment.VolunteerID is None:
-#                     assignment_repo.assign_volunteer_to_group(aid, volunteer_id)
-#
-#     # 8. response
-#     return {
-#         "volunteer_id": volunteer.id,
-#         "start_location": start_location,
-#         "groups_count": len(groups),
-#         "route": route,
-#         "detailed_route": detailed_route,
-#         "total_meals": result.get("total_deliveries", 0),
-#         "visited_count": len(route),
-#         "vehicle_capacity": capacity,
-#         "final_time": result.get("final_time", 0)
-#     }

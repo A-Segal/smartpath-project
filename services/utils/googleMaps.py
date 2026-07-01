@@ -1,8 +1,9 @@
 # geolocation_utils.py
+import os
 import requests
 from math import radians, cos, sin, sqrt, atan2
 
-API_KEY = "AIzaSyAKmXqHHc8_vOP30aKSKvV2C3sH2c67fqY"
+API_KEY = os.environ.get("GOOGLE_MAPS_API_KEY", "AIzaSyAKmXqHHc8_vOP30aKSKvV2C3sH2c67fqY")
 
 
 # =========================
@@ -41,14 +42,30 @@ def distance_between_points(lat1, lng1, lat2, lng2):
 
 
 # =========================
-# פונקציה 3: זמן נסיעה בין שתי נקודות (Google Distance Matrix)
+# פונקציה 3: זמן נסיעה בין שתי נקודות (Google Distance Matrix) + CACHE
 # =========================
 import requests
+
+# מטמון לזמני נסיעה — חוסך קריאות חוזרות ל-Google
+_travel_cache: dict[tuple, float] = {}
+
 
 def travel_time_between_points(lat1, lng1, lat2, lng2, mode="driving"):
     import requests
 
-    print("CALLING GOOGLE MAPS")
+    # מפתח cache מעוגל ל-4 ספרות (דיוק של ~11 מטר)
+    key = (round(lat1, 4), round(lng1, 4), round(lat2, 4), round(lng2, 4))
+
+    # בדיקה במטמון — כיוון ישיר
+    if key in _travel_cache:
+        return _travel_cache[key]
+
+    # בדיקה במטמון — כיוון הפוך (זמן נסיעה דומה)
+    rev_key = (key[2], key[3], key[0], key[1])
+    if rev_key in _travel_cache:
+        return _travel_cache[rev_key]
+
+    print("CALLING GOOGLE MAPS:", key)
 
     origins = f"{lat1},{lng1}"
     destinations = f"{lat2},{lng2}"
@@ -62,20 +79,19 @@ def travel_time_between_points(lat1, lng1, lat2, lng2, mode="driving"):
     response = requests.get(url)
     data = response.json()
 
-    print("GOOGLE STATUS:", data.get("status"))
-    print("FULL RESPONSE:", data)
-
     if data.get('status') != 'OK':
-        return 0   # ⚠️ לא 999999!
+        _travel_cache[key] = 999999
+        return 999999
 
     element = data['rows'][0]['elements'][0]
 
-    print("ELEMENT STATUS:", element.get("status"))
-
     if element.get('status') != 'OK':
-        return 0
+        _travel_cache[key] = 999999
+        return 999999
 
-    return element['duration']['value'] / 60
+    result = element['duration']['value'] / 60
+    _travel_cache[key] = result
+    return result
 
 # =========================
 # פונקציה 4: קבלת אזור/יישוב/מחוז
